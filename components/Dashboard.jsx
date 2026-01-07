@@ -4,8 +4,8 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 // =============================================================================
 // SUPABASE CONFIGURATIE
 // =============================================================================
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = 'https://rmtpaxywtygneartdjax.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_MORhVhUhH4hCQhHyGlNc1A_qaR03wvH';
 
 // Alle data komt uit Supabase - geen dummy data meer
 
