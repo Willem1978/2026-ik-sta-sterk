@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Eye, Footprints, Dumbbell, Pill, Apple, Home, ChevronRight, ChevronLeft, Check, AlertCircle, Phone, MapPin, Clock, Heart, Shield, Users, FileText, CheckCircle2, ArrowRight, X, Send, ArrowLeft, Calendar, Lightbulb, Search, Loader } from 'lucide-react';
 
 // =============================================================================
@@ -9,6 +9,36 @@ const PDOK_BASE_URL = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1';
 // Supabase configuratie - gebruikt environment variables
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// =============================================================================
+// LOCATION INPUT COMPONENT - Buiten hoofdcomponent om focus te behouden
+// =============================================================================
+const LocationInput = memo(({ value, onChange, onKeyDown, onFocus, placeholder, showDropdown, colors, font }) => {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={onKeyDown}
+      onFocus={onFocus}
+      placeholder={placeholder}
+      autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="off"
+      spellCheck={false}
+      style={{
+        flex: 1, 
+        border: 'none', 
+        background: 'transparent',
+        fontSize: '17px', 
+        fontFamily: font,
+        outline: 'none', 
+        color: colors.textDark,
+        width: '100%'
+      }}
+    />
+  );
+});
 
 const IkStaSterkTest = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
@@ -1925,11 +1955,9 @@ const IkStaSterkTest = () => {
           borderRadius: '10px', transition: 'border-color 0.2s'
         }}>
           <Search size={20} color={ZLIM.textMedium} />
-          <input
-            ref={locationInputRef}
-            type="text"
+          <LocationInput
             value={locationQuery}
-            onChange={(e) => setLocationQuery(e.target.value)}
+            onChange={setLocationQuery}
             onKeyDown={handleLocationKeyDown}
             onFocus={() => {
               if (locationSuggestions.length > 0) {
@@ -1937,20 +1965,9 @@ const IkStaSterkTest = () => {
               }
             }}
             placeholder="Typ je straat en woonplaats"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            style={{
-              flex: 1, 
-              border: 'none', 
-              background: 'transparent',
-              fontSize: '17px', 
-              fontFamily: FONT.family, 
-              outline: 'none', 
-              color: ZLIM.textDark,
-              width: '100%'
-            }}
+            showDropdown={showLocationDropdown}
+            colors={ZLIM}
+            font={FONT.family}
           />
           {locationLoading && (
             <div style={{ animation: 'spin 1s linear infinite' }}>
