@@ -133,7 +133,7 @@ const IkStaSterkTest = () => {
       inputElement.removeEventListener('input', handleInput);
       clearTimeout(pdokDebounceRef.current);
     };
-  }, []);
+  }, [currentScreen]); // Heractiveer wanneer scherm verandert naar demographics
 
   // Click outside handler voor PDOK dropdown
   useEffect(() => {
