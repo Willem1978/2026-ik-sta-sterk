@@ -10,6 +10,252 @@ const PDOK_BASE_URL = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// =============================================================================
+// PDOK LOCATION SEARCH COMPONENT - Volledig aparte component met eigen state
+// Dit voorkomt re-renders van de parent component bij elke keystroke
+// =============================================================================
+const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, colors, font }) => {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  // PDOK Suggest API
+  const pdokSuggest = async (searchQuery) => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    try {
+      const url = `${PDOK_BASE_URL}/suggest?q=${encodeURIComponent(searchQuery)}&fq=${encodeURIComponent('type:(adres OR woonplaats OR weg)')}&rows=10&fl=id,weergavenaam,type,score`;
+      const response = await fetch(url);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.response?.docs || [];
+    } catch (error) {
+      console.error('PDOK suggest error:', error);
+      return [];
+    }
+  };
+
+  // PDOK Lookup API
+  const pdokLookup = async (pdokId) => {
+    if (!pdokId) return null;
+    try {
+      const params = new URLSearchParams({ id: pdokId, fl: '*' });
+      const response = await fetch(`${PDOK_BASE_URL}/lookup?${params}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.response?.docs?.[0] || null;
+    } catch (error) {
+      console.error('PDOK lookup error:', error);
+      return null;
+    }
+  };
+
+  // Parse coordinates
+  const parseCoordinates = (centroide) => {
+    if (!centroide) return { lat: null, lng: null };
+    const match = centroide.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
+    if (!match) return { lat: null, lng: null };
+    return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
+  };
+
+  // Debounced search
+  useEffect(() => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const results = await pdokSuggest(query);
+        setSuggestions(results);
+        setShowDropdown(results.length > 0);
+        setSelectedIndex(-1);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle selection
+  const handleSelect = async (suggestion) => {
+    setLoading(true);
+    setShowDropdown(false);
+    setQuery(suggestion.weergavenaam);
+    
+    try {
+      const details = await pdokLookup(suggestion.id);
+      if (details) {
+        const coords = parseCoordinates(details.centroide_ll);
+        const locData = {
+          pdok_id: details.id,
+          weergavenaam: suggestion.weergavenaam,
+          woonplaats: details.woonplaatsnaam || null,
+          gemeentenaam: details.gemeentenaam || null,
+          gemeentecode: details.gemeentecode || null,
+          postcode: details.postcode || null,
+          straatnaam: details.straatnaam || null,
+          huisnummer: details.huisnummer ? String(details.huisnummer) : null,
+          wijkcode: details.wijkcode || null,
+          buurtcode: details.buurtcode || null,
+          latitude: coords.lat,
+          longitude: coords.lng
+        };
+        onLocationSelect(locData);
+      }
+    } catch (err) {
+      console.error('Selection error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e) => {
+    if (!showDropdown || suggestions.length === 0) return;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => prev < suggestions.length - 1 ? prev + 1 : 0);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : suggestions.length - 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0) handleSelect(suggestions[selectedIndex]);
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        break;
+    }
+  };
+
+  // Handle clear
+  const handleClear = () => {
+    setQuery('');
+    setSuggestions([]);
+    setShowDropdown(false);
+    onClear();
+  };
+
+  return (
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '14px 18px', background: colors.white,
+        border: `2px solid ${showDropdown ? colors.sage : colors.border}`,
+        borderRadius: '10px', transition: 'border-color 0.2s'
+      }}>
+        <Search size={20} color={colors.textMedium} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+          placeholder="Typ je straat en woonplaats"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          style={{
+            flex: 1, 
+            border: 'none', 
+            background: 'transparent',
+            fontSize: '17px', 
+            fontFamily: font,
+            outline: 'none', 
+            color: colors.textDark,
+            width: '100%'
+          }}
+        />
+        {loading && (
+          <div style={{ animation: 'spin 1s linear infinite' }}>
+            <Loader size={20} color={colors.sage} />
+          </div>
+        )}
+        {(query || selectedLocation) && !loading && (
+          <button
+            type="button"
+            onClick={handleClear}
+            style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
+          >
+            <X size={18} color={colors.textMedium} />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown met suggesties */}
+      {showDropdown && suggestions.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
+          background: colors.white, borderRadius: '10px', 
+          border: `1px solid ${colors.border}`,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, maxHeight: '240px', overflowY: 'auto'
+        }}>
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={suggestion.id}
+              onClick={() => handleSelect(suggestion)}
+              style={{
+                width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px',
+                background: index === selectedIndex ? colors.sagePale : 'transparent',
+                border: 'none', borderBottom: index < suggestions.length - 1 ? `1px solid ${colors.border}` : 'none',
+                cursor: 'pointer', textAlign: 'left', fontFamily: font
+              }}
+            >
+              <MapPin size={18} color={colors.sage} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '15px', color: colors.textDark, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {suggestion.weergavenaam}
+                </div>
+                <div style={{ fontSize: '12px', color: colors.textLight, marginTop: '2px' }}>
+                  {suggestion.type === 'weg' && 'Straat'}
+                  {suggestion.type === 'adres' && 'Adres'}
+                  {suggestion.type === 'woonplaats' && 'Woonplaats'}
+                </div>
+              </div>
+              <ChevronRight size={16} color={colors.textLight} />
+            </button>
+          ))}
+        </div>
+      )}
+      
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+// =============================================================================
+// EINDE PDOK LOCATION SEARCH COMPONENT
+// =============================================================================
+
 const IkStaSterkTest = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -1924,8 +2170,8 @@ const IkStaSterkTest = () => {
         </div>
       </div>
 
-      {/* Woonplaats - PDOK Autocomplete (NIEUW 2025) */}
-      <div style={{ marginBottom: '24px', position: 'relative' }} ref={locationDropdownRef}>
+      {/* Woonplaats - PDOK Autocomplete met aparte component */}
+      <div style={{ marginBottom: '24px' }}>
         <label style={{ display: 'block', fontSize: '15px', fontWeight: FONT.bold, marginBottom: '6px', color: ZLIM.textDark }}>
           Waar woon je?
         </label>
@@ -1933,59 +2179,19 @@ const IkStaSterkTest = () => {
           Typ je straat en woonplaats
         </p>
 
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '14px 18px', background: ZLIM.white,
-          border: `2px solid ${showLocationDropdown ? ZLIM.sage : ZLIM.border}`,
-          borderRadius: '10px', transition: 'border-color 0.2s'
-        }}>
-          <Search size={20} color={ZLIM.textMedium} />
-          <input
-            ref={locationInputRef}
-            type="text"
-            defaultValue=""
-            onKeyDown={handleLocationKeyDown}
-            onFocus={() => {
-              if (locationSuggestions.length > 0) {
-                setShowLocationDropdown(true);
-              }
-            }}
-            placeholder="Typ je straat en woonplaats"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            style={{
-              flex: 1, 
-              border: 'none', 
-              background: 'transparent',
-              fontSize: '17px', 
-              fontFamily: FONT.family, 
-              outline: 'none', 
-              color: ZLIM.textDark,
-              width: '100%'
-            }}
-          />
-          {locationLoading && (
-            <div style={{ animation: 'spin 1s linear infinite' }}>
-              <Loader size={20} color={ZLIM.sage} />
-            </div>
-          )}
-          {locationData && !locationLoading && (
-            <button
-              type="button"
-              onClick={() => { 
-                if (locationInputRef.current) locationInputRef.current.value = '';
-                setLocationSuggestions([]); 
-                setLocationData(null); 
-                setWoonplaats(''); 
-              }}
-              style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
-            >
-              <X size={18} color={ZLIM.textMedium} />
-            </button>
-          )}
-        </div>
+        <PDOKLocationSearch
+          onLocationSelect={(locData) => {
+            setLocationData(locData);
+            setWoonplaats(locData.woonplaats || locData.weergavenaam);
+          }}
+          onClear={() => {
+            setLocationData(null);
+            setWoonplaats('');
+          }}
+          selectedLocation={locationData}
+          colors={ZLIM}
+          font={FONT.family}
+        />
 
         {/* Geselecteerde locatie badge */}
         {locationData && (
@@ -2001,45 +2207,6 @@ const IkStaSterkTest = () => {
             <Check size={16} color={ZLIM.success} />
           </div>
         )}
-
-        {/* Suggesties dropdown */}
-        {showLocationDropdown && locationSuggestions.length > 0 && (
-          <div style={{
-            position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
-            background: ZLIM.white, border: `1px solid ${ZLIM.border}`, borderRadius: '10px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: '300px', overflowY: 'auto', zIndex: 1000
-          }}>
-            {locationSuggestions.map((suggestion, index) => (
-              <button
-                key={suggestion.id}
-                onClick={() => handleLocationSelect(suggestion)}
-                onMouseEnter={() => setSelectedLocationIndex(index)}
-                style={{
-                  width: '100%', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
-                  background: index === selectedLocationIndex ? ZLIM.sagePale : 'transparent',
-                  border: 'none', borderBottom: index < locationSuggestions.length - 1 ? `1px solid ${ZLIM.borderLight}` : 'none',
-                  cursor: 'pointer', textAlign: 'left', fontFamily: FONT.family
-                }}
-              >
-                <MapPin size={18} color={ZLIM.sage} style={{ flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '15px', color: ZLIM.textDark, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {suggestion.weergavenaam}
-                  </div>
-                  <div style={{ fontSize: '12px', color: ZLIM.textLight, marginTop: '2px' }}>
-                    {suggestion.type === 'weg' && 'Straat'}
-                    {suggestion.type === 'adres' && 'Adres'}
-                    {suggestion.type === 'woonplaats' && 'Woonplaats'}
-                    {suggestion.type === 'postcode' && 'Postcode'}
-                  </div>
-                </div>
-                <ChevronRight size={16} color={ZLIM.textLight} />
-              </button>
-            ))}
-          </div>
-        )}
-        
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
 
       {/* E-mail - uncontrolled input met ref */}
