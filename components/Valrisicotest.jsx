@@ -66,22 +66,18 @@ const IkStaSterkTest = () => {
   const pdokSuggest = async (query) => {
     if (!query || query.length < 2) return [];
     try {
-      // Zoek op straten en woonplaatsen (niet alleen complete adressen)
+      // Gebruik boost query om straten (weg) hoger te scoren dan adressen
       const params = new URLSearchParams({
         q: query,
         fq: 'type:(weg OR woonplaats OR adres)',
+        bq: 'type:weg^2.0',
         rows: '10',
         fl: 'id,weergavenaam,type,score'
       });
       const response = await fetch(`${PDOK_BASE_URL}/suggest?${params}`);
       if (!response.ok) return [];
       const data = await response.json();
-      // Sorteer: straten (weg) eerst, dan woonplaatsen, dan adressen
-      const docs = data.response?.docs || [];
-      return docs.sort((a, b) => {
-        const order = { weg: 0, woonplaats: 1, adres: 2 };
-        return (order[a.type] ?? 3) - (order[b.type] ?? 3);
-      });
+      return data.response?.docs || [];
     } catch (error) {
       console.error('PDOK suggest error:', error);
       return [];
@@ -1939,10 +1935,7 @@ const IkStaSterkTest = () => {
             name="location-search"
             type="text"
             value={locationQuery}
-            onChange={(e) => {
-              e.preventDefault();
-              setLocationQuery(e.target.value);
-            }}
+            onChange={(e) => setLocationQuery(e.target.value)}
             onKeyDown={handleLocationKeyDown}
             onFocus={() => {
               if (locationSuggestions.length > 0) {
