@@ -10,36 +10,6 @@ const PDOK_BASE_URL = 'https://api.pdok.nl/bzk/locatieserver/search/v3_1';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// =============================================================================
-// LOCATION INPUT COMPONENT - Buiten hoofdcomponent om focus te behouden
-// =============================================================================
-const LocationInput = memo(({ value, onChange, onKeyDown, onFocus, placeholder, showDropdown, colors, font }) => {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onKeyDown={onKeyDown}
-      onFocus={onFocus}
-      placeholder={placeholder}
-      autoComplete="off"
-      autoCorrect="off"
-      autoCapitalize="off"
-      spellCheck={false}
-      style={{
-        flex: 1, 
-        border: 'none', 
-        background: 'transparent',
-        fontSize: '17px', 
-        fontFamily: font,
-        outline: 'none', 
-        color: colors.textDark,
-        width: '100%'
-      }}
-    />
-  );
-});
-
 const IkStaSterkTest = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -128,31 +98,42 @@ const IkStaSterkTest = () => {
     return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
   };
 
-  // PDOK autocomplete effect
+  // PDOK autocomplete effect - gebruik native DOM events om re-renders te voorkomen
   useEffect(() => {
-    if (locationQuery.length < 2) {
-      setLocationSuggestions([]);
-      setShowLocationDropdown(false);
-      return;
-    }
+    const inputElement = locationInputRef.current;
+    if (!inputElement) return;
     
-    clearTimeout(pdokDebounceRef.current);
-    pdokDebounceRef.current = setTimeout(async () => {
-      setLocationLoading(true);
-      try {
-        const results = await pdokSuggest(locationQuery);
-        setLocationSuggestions(results);
-        setShowLocationDropdown(results.length > 0);
-        setSelectedLocationIndex(-1);
-      } catch (err) {
-        console.error('Location search error:', err);
-      } finally {
-        setLocationLoading(false);
+    const handleInput = async (e) => {
+      const query = e.target.value;
+      
+      if (query.length < 2) {
+        setLocationSuggestions([]);
+        setShowLocationDropdown(false);
+        return;
       }
-    }, 300);
+      
+      clearTimeout(pdokDebounceRef.current);
+      pdokDebounceRef.current = setTimeout(async () => {
+        setLocationLoading(true);
+        try {
+          const results = await pdokSuggest(query);
+          setLocationSuggestions(results);
+          setShowLocationDropdown(results.length > 0);
+          setSelectedLocationIndex(-1);
+        } catch (err) {
+          console.error('Location search error:', err);
+        } finally {
+          setLocationLoading(false);
+        }
+      }, 300);
+    };
     
-    return () => clearTimeout(pdokDebounceRef.current);
-  }, [locationQuery]);
+    inputElement.addEventListener('input', handleInput);
+    return () => {
+      inputElement.removeEventListener('input', handleInput);
+      clearTimeout(pdokDebounceRef.current);
+    };
+  }, []);
 
   // Click outside handler voor PDOK dropdown
   useEffect(() => {
@@ -168,7 +149,11 @@ const IkStaSterkTest = () => {
   const handleLocationSelect = useCallback(async (suggestion) => {
     setLocationLoading(true);
     setShowLocationDropdown(false);
-    setLocationQuery(suggestion.weergavenaam);
+    
+    // Zet input value via ref (geen state update = geen re-render)
+    if (locationInputRef.current) {
+      locationInputRef.current.value = suggestion.weergavenaam;
+    }
     
     try {
       const details = await pdokLookup(suggestion.id);
@@ -1955,9 +1940,10 @@ const IkStaSterkTest = () => {
           borderRadius: '10px', transition: 'border-color 0.2s'
         }}>
           <Search size={20} color={ZLIM.textMedium} />
-          <LocationInput
-            value={locationQuery}
-            onChange={setLocationQuery}
+          <input
+            ref={locationInputRef}
+            type="text"
+            defaultValue=""
             onKeyDown={handleLocationKeyDown}
             onFocus={() => {
               if (locationSuggestions.length > 0) {
@@ -1965,20 +1951,31 @@ const IkStaSterkTest = () => {
               }
             }}
             placeholder="Typ je straat en woonplaats"
-            showDropdown={showLocationDropdown}
-            colors={ZLIM}
-            font={FONT.family}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            style={{
+              flex: 1, 
+              border: 'none', 
+              background: 'transparent',
+              fontSize: '17px', 
+              fontFamily: FONT.family, 
+              outline: 'none', 
+              color: ZLIM.textDark,
+              width: '100%'
+            }}
           />
           {locationLoading && (
             <div style={{ animation: 'spin 1s linear infinite' }}>
               <Loader size={20} color={ZLIM.sage} />
             </div>
           )}
-          {(locationQuery || locationData) && !locationLoading && (
+          {locationData && !locationLoading && (
             <button
               type="button"
               onClick={() => { 
-                setLocationQuery(''); 
+                if (locationInputRef.current) locationInputRef.current.value = '';
                 setLocationSuggestions([]); 
                 setLocationData(null); 
                 setWoonplaats(''); 
