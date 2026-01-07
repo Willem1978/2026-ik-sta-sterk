@@ -49,6 +49,7 @@ const IkStaSterkTest = () => {
   const emailInputRef = useRef(null);
   const pdokDebounceRef = useRef(null);
   const locationDropdownRef = useRef(null);
+  const locationInputRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -65,16 +66,22 @@ const IkStaSterkTest = () => {
   const pdokSuggest = async (query) => {
     if (!query || query.length < 2) return [];
     try {
+      // Zoek op straten en woonplaatsen (niet alleen complete adressen)
       const params = new URLSearchParams({
         q: query,
-        fq: 'type:(adres OR woonplaats OR postcode)',
+        fq: 'type:(weg OR woonplaats OR adres)',
         rows: '10',
         fl: 'id,weergavenaam,type,score'
       });
       const response = await fetch(`${PDOK_BASE_URL}/suggest?${params}`);
       if (!response.ok) return [];
       const data = await response.json();
-      return data.response?.docs || [];
+      // Sorteer: straten (weg) eerst, dan woonplaatsen, dan adressen
+      const docs = data.response?.docs || [];
+      return docs.sort((a, b) => {
+        const order = { weg: 0, woonplaats: 1, adres: 2 };
+        return (order[a.type] ?? 3) - (order[b.type] ?? 3);
+      });
     } catch (error) {
       console.error('PDOK suggest error:', error);
       return [];
@@ -1828,49 +1835,27 @@ const IkStaSterkTest = () => {
     ); 
   }; 
 
-  // Gender knop component met hover effect
+  // Gender knop component - vereenvoudigd zonder useState om focus problemen te voorkomen
   const GenderButton = ({ option, isSelected, onClick }) => {
-    const [isPressed, setIsPressed] = useState(false);
-    
-    const handleMouseEnter = () => {
-      if (window.matchMedia('(hover: hover)').matches) {
-        setIsPressed(true);
-      }
-    };
-    
-    const handleMouseLeave = () => {
-      setIsPressed(false);
-    };
-    
-    const handleClick = () => {
-      setIsPressed(false);
-      onClick();
-    };
-    
-    const isActive = isSelected || isPressed;
-    
     return (
       <button 
-        onClick={handleClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={() => setIsPressed(true)}
-        onTouchEnd={() => setIsPressed(false)}
+        type="button"
+        onClick={onClick}
         style={{ 
           padding: '14px 18px', 
           borderRadius: '10px', 
-          border: `2px solid ${isActive ? ZLIM.sage : ZLIM.border}`, 
-          background: isActive ? ZLIM.sagePale : ZLIM.white, 
+          border: `2px solid ${isSelected ? ZLIM.sage : ZLIM.border}`, 
+          background: isSelected ? ZLIM.sagePale : ZLIM.white, 
           cursor: 'pointer', 
           fontFamily: FONT.family, 
           fontSize: '15px', 
           fontWeight: FONT.semibold, 
-          color: isActive ? ZLIM.sageDark : ZLIM.textDark, 
+          color: isSelected ? ZLIM.sageDark : ZLIM.textDark, 
           textAlign: 'left', 
           display: 'flex', 
           alignItems: 'center', 
           gap: '12px', 
-          transition: 'all 0.2s',
+          transition: 'all 0.15s',
           WebkitTapHighlightColor: 'transparent'
         }}
       >
@@ -1878,12 +1863,12 @@ const IkStaSterkTest = () => {
           width: '20px', 
           height: '20px', 
           borderRadius: '50%', 
-          border: `2px solid ${isActive ? ZLIM.sage : ZLIM.border}`, 
+          border: `2px solid ${isSelected ? ZLIM.sage : ZLIM.border}`, 
           background: isSelected ? ZLIM.sage : ZLIM.white, 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          transition: 'all 0.2s'
+          transition: 'all 0.15s'
         }}>
           {isSelected && <Check size={12} color="#fff" strokeWidth={3} />}
         </div>
@@ -1949,22 +1934,41 @@ const IkStaSterkTest = () => {
         }}>
           <Search size={20} color={ZLIM.textMedium} />
           <input
+            ref={locationInputRef}
             id="location-search-input"
             name="location-search"
             type="text"
             value={locationQuery}
-            onChange={(e) => setLocationQuery(e.target.value)}
+            onChange={(e) => {
+              e.preventDefault();
+              setLocationQuery(e.target.value);
+            }}
             onKeyDown={handleLocationKeyDown}
-            onFocus={() => locationSuggestions.length > 0 && setShowLocationDropdown(true)}
-            placeholder="Typ je straat of woonplaats"
+            onFocus={() => {
+              if (locationSuggestions.length > 0) {
+                setShowLocationDropdown(true);
+              }
+            }}
+            placeholder="Typ je straat en woonplaats"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
-            spellCheck="false"
+            spellCheck={false}
+            data-lpignore="true"
+            data-form-type="other"
             style={{
-              flex: 1, border: 'none', background: 'transparent',
-              fontSize: '16px', fontFamily: FONT.family, outline: 'none', color: ZLIM.textDark,
-              WebkitAppearance: 'none'
+              flex: 1, 
+              border: 'none', 
+              background: 'transparent',
+              fontSize: '17px', 
+              fontFamily: FONT.family, 
+              outline: 'none', 
+              color: ZLIM.textDark,
+              WebkitAppearance: 'none',
+              MozAppearance: 'none',
+              appearance: 'none',
+              width: '100%',
+              minWidth: 0
             }}
           />
           {locationLoading && (
@@ -2022,6 +2026,7 @@ const IkStaSterkTest = () => {
                     {suggestion.weergavenaam}
                   </div>
                   <div style={{ fontSize: '12px', color: ZLIM.textLight, marginTop: '2px' }}>
+                    {suggestion.type === 'weg' && 'Straat'}
                     {suggestion.type === 'adres' && 'Adres'}
                     {suggestion.type === 'woonplaats' && 'Woonplaats'}
                     {suggestion.type === 'postcode' && 'Postcode'}
