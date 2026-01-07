@@ -105,43 +105,31 @@ const IkStaSterkTest = () => {
     return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
   };
 
-  // PDOK autocomplete effect - gebruik ref value in plaats van state
+  // PDOK autocomplete effect
   useEffect(() => {
-    const input = locationInputRef.current;
-    if (!input) return;
+    if (locationQuery.length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationDropdown(false);
+      return;
+    }
     
-    const handleInput = () => {
-      const value = input.value;
-      setLocationQuery(value); // Alleen voor weergave badge
-      
-      if (value.length < 2) {
-        setLocationSuggestions([]);
-        setShowLocationDropdown(false);
-        return;
+    clearTimeout(pdokDebounceRef.current);
+    pdokDebounceRef.current = setTimeout(async () => {
+      setLocationLoading(true);
+      try {
+        const results = await pdokSuggest(locationQuery);
+        setLocationSuggestions(results);
+        setShowLocationDropdown(results.length > 0);
+        setSelectedLocationIndex(-1);
+      } catch (err) {
+        console.error('Location search error:', err);
+      } finally {
+        setLocationLoading(false);
       }
-      
-      clearTimeout(pdokDebounceRef.current);
-      pdokDebounceRef.current = setTimeout(async () => {
-        setLocationLoading(true);
-        try {
-          const results = await pdokSuggest(value);
-          setLocationSuggestions(results);
-          setShowLocationDropdown(results.length > 0);
-          setSelectedLocationIndex(-1);
-        } catch (err) {
-          console.error('Location search error:', err);
-        } finally {
-          setLocationLoading(false);
-        }
-      }, 300);
-    };
+    }, 300);
     
-    input.addEventListener('input', handleInput);
-    return () => {
-      input.removeEventListener('input', handleInput);
-      clearTimeout(pdokDebounceRef.current);
-    };
-  }, [currentScreen]); // Alleen opnieuw binden bij screen change
+    return () => clearTimeout(pdokDebounceRef.current);
+  }, [locationQuery]);
 
   // Click outside handler voor PDOK dropdown
   useEffect(() => {
@@ -157,11 +145,6 @@ const IkStaSterkTest = () => {
   const handleLocationSelect = useCallback(async (suggestion) => {
     setLocationLoading(true);
     setShowLocationDropdown(false);
-    
-    // Zet input value direct via ref
-    if (locationInputRef.current) {
-      locationInputRef.current.value = suggestion.weergavenaam;
-    }
     setLocationQuery(suggestion.weergavenaam);
     
     try {
@@ -1951,10 +1934,9 @@ const IkStaSterkTest = () => {
           <Search size={20} color={ZLIM.textMedium} />
           <input
             ref={locationInputRef}
-            id="location-search-input"
-            name="location-search"
             type="text"
-            defaultValue=""
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
             onKeyDown={handleLocationKeyDown}
             onFocus={() => {
               if (locationSuggestions.length > 0) {
@@ -1966,8 +1948,6 @@ const IkStaSterkTest = () => {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
-            data-lpignore="true"
-            data-form-type="other"
             style={{
               flex: 1, 
               border: 'none', 
@@ -1976,11 +1956,7 @@ const IkStaSterkTest = () => {
               fontFamily: FONT.family, 
               outline: 'none', 
               color: ZLIM.textDark,
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
-              appearance: 'none',
-              width: '100%',
-              minWidth: 0
+              width: '100%'
             }}
           />
           {locationLoading && (
@@ -1992,7 +1968,6 @@ const IkStaSterkTest = () => {
             <button
               type="button"
               onClick={() => { 
-                if (locationInputRef.current) locationInputRef.current.value = '';
                 setLocationQuery(''); 
                 setLocationSuggestions([]); 
                 setLocationData(null); 
