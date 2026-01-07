@@ -66,15 +66,8 @@ const IkStaSterkTest = () => {
   const pdokSuggest = async (query) => {
     if (!query || query.length < 2) return [];
     try {
-      // Gebruik boost query om straten (weg) hoger te scoren dan adressen
-      const params = new URLSearchParams({
-        q: query,
-        fq: 'type:(weg OR woonplaats OR adres)',
-        bq: 'type:weg^2.0',
-        rows: '10',
-        fl: 'id,weergavenaam,type,score'
-      });
-      const response = await fetch(`${PDOK_BASE_URL}/suggest?${params}`);
+      const url = `${PDOK_BASE_URL}/suggest?q=${encodeURIComponent(query)}&fq=${encodeURIComponent('type:(adres OR woonplaats OR weg)')}&rows=10&fl=id,weergavenaam,type,score`;
+      const response = await fetch(url);
       if (!response.ok) return [];
       const data = await response.json();
       return data.response?.docs || [];
