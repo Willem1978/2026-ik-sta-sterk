@@ -105,29 +105,43 @@ const IkStaSterkTest = () => {
     return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
   };
 
-  // PDOK autocomplete effect
+  // PDOK autocomplete effect - gebruik ref value in plaats van state
   useEffect(() => {
-    if (locationQuery.length < 2) {
-      setLocationSuggestions([]);
-      setShowLocationDropdown(false);
-      return;
-    }
-    clearTimeout(pdokDebounceRef.current);
-    pdokDebounceRef.current = setTimeout(async () => {
-      setLocationLoading(true);
-      try {
-        const results = await pdokSuggest(locationQuery);
-        setLocationSuggestions(results);
-        setShowLocationDropdown(results.length > 0);
-        setSelectedLocationIndex(-1);
-      } catch (err) {
-        console.error('Location search error:', err);
-      } finally {
-        setLocationLoading(false);
+    const input = locationInputRef.current;
+    if (!input) return;
+    
+    const handleInput = () => {
+      const value = input.value;
+      setLocationQuery(value); // Alleen voor weergave badge
+      
+      if (value.length < 2) {
+        setLocationSuggestions([]);
+        setShowLocationDropdown(false);
+        return;
       }
-    }, 300);
-    return () => clearTimeout(pdokDebounceRef.current);
-  }, [locationQuery]);
+      
+      clearTimeout(pdokDebounceRef.current);
+      pdokDebounceRef.current = setTimeout(async () => {
+        setLocationLoading(true);
+        try {
+          const results = await pdokSuggest(value);
+          setLocationSuggestions(results);
+          setShowLocationDropdown(results.length > 0);
+          setSelectedLocationIndex(-1);
+        } catch (err) {
+          console.error('Location search error:', err);
+        } finally {
+          setLocationLoading(false);
+        }
+      }, 300);
+    };
+    
+    input.addEventListener('input', handleInput);
+    return () => {
+      input.removeEventListener('input', handleInput);
+      clearTimeout(pdokDebounceRef.current);
+    };
+  }, [currentScreen]); // Alleen opnieuw binden bij screen change
 
   // Click outside handler voor PDOK dropdown
   useEffect(() => {
@@ -143,7 +157,13 @@ const IkStaSterkTest = () => {
   const handleLocationSelect = useCallback(async (suggestion) => {
     setLocationLoading(true);
     setShowLocationDropdown(false);
+    
+    // Zet input value direct via ref
+    if (locationInputRef.current) {
+      locationInputRef.current.value = suggestion.weergavenaam;
+    }
     setLocationQuery(suggestion.weergavenaam);
+    
     try {
       const details = await pdokLookup(suggestion.id);
       if (!details) {
@@ -1934,8 +1954,7 @@ const IkStaSterkTest = () => {
             id="location-search-input"
             name="location-search"
             type="text"
-            value={locationQuery}
-            onChange={(e) => setLocationQuery(e.target.value)}
+            defaultValue=""
             onKeyDown={handleLocationKeyDown}
             onFocus={() => {
               if (locationSuggestions.length > 0) {
@@ -1969,9 +1988,16 @@ const IkStaSterkTest = () => {
               <Loader size={20} color={ZLIM.sage} />
             </div>
           )}
-          {locationQuery && !locationLoading && (
+          {(locationQuery || locationData) && !locationLoading && (
             <button
-              onClick={() => { setLocationQuery(''); setLocationSuggestions([]); setLocationData(null); setWoonplaats(''); }}
+              type="button"
+              onClick={() => { 
+                if (locationInputRef.current) locationInputRef.current.value = '';
+                setLocationQuery(''); 
+                setLocationSuggestions([]); 
+                setLocationData(null); 
+                setWoonplaats(''); 
+              }}
               style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
             >
               <X size={18} color={ZLIM.textMedium} />
@@ -2060,38 +2086,51 @@ const IkStaSterkTest = () => {
 
       <PrimaryButton 
         onClick={async () => {
-          // Lees email uit ref
-          const emailValue = emailInputRef.current ? emailInputRef.current.value.trim() : '';
+          // Voorkom dubbel klikken
+          if (isProcessing) return;
+          setIsProcessing(true);
           
-          // Valideer
-          if (!demographics.gender) {
-            alert('Selecteer je geslacht');
-            return;
+          try {
+            // Lees email uit ref
+            const emailValue = emailInputRef.current ? emailInputRef.current.value.trim() : '';
+            
+            // Valideer
+            if (!demographics.gender) {
+              alert('Selecteer je geslacht');
+              setIsProcessing(false);
+              return;
+            }
+            
+            // Valideer locatie - accepteer PDOK data OF woonplaats
+            if (!locationData && !woonplaats) {
+              alert('Selecteer je locatie uit de suggesties');
+              setIsProcessing(false);
+              return;
+            }
+            
+            // Gebruik woonplaats van PDOK data als beschikbaar
+            const finalWoonplaats = locationData?.woonplaats || woonplaats || locationData?.weergavenaam || '';
+            
+            setDemographics(prev => ({ ...prev, email: emailValue }));
+            
+            // Bereken risiconiveau
+            const calculatedRiskLevel = calculateRiskLevel();
+            setRiskLevel(calculatedRiskLevel);
+            
+            // Sla data op in Supabase
+            await saveToDatabase(finalWoonplaats, emailValue, calculatedRiskLevel);
+            
+            // Ga door naar resultaten
+            setReportPage(0); 
+            animateTransition(() => setCurrentScreen('report'));
+          } catch (error) {
+            console.error('Error:', error);
+            alert('Er ging iets mis. Probeer het opnieuw.');
+          } finally {
+            setIsProcessing(false);
           }
-          
-          // Valideer locatie - accepteer PDOK data OF woonplaats
-          if (!locationData && !woonplaats) {
-            alert('Selecteer je locatie uit de suggesties');
-            return;
-          }
-          
-          // Gebruik woonplaats van PDOK data als beschikbaar
-          const finalWoonplaats = locationData?.woonplaats || woonplaats || locationData?.weergavenaam || '';
-          
-          setDemographics(prev => ({ ...prev, email: emailValue }));
-          
-          // Bereken risiconiveau
-          const calculatedRiskLevel = calculateRiskLevel();
-          setRiskLevel(calculatedRiskLevel);
-          
-          // Sla data op in Supabase - AWAIT zodat savedRecordId beschikbaar is
-          await saveToDatabase(finalWoonplaats, emailValue, calculatedRiskLevel);
-          
-          // Ga door naar resultaten
-          setReportPage(0); 
-          animateTransition(() => setCurrentScreen('report'));
         }} 
-        disabled={!demographics.gender}
+        disabled={!demographics.gender || isProcessing}
       >
         Bekijk mijn uitslag <ArrowRight size={20} />
       </PrimaryButton>
