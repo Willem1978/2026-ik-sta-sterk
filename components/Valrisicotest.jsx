@@ -20,6 +20,7 @@ const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, color
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isSelecting, setIsSelecting] = useState(false); // Flag om search te skippen na selectie
   
   // Update query wanneer selectedLocation verandert (bijv. na page refresh of externe wijziging)
   useEffect(() => {
@@ -70,8 +71,14 @@ const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, color
     return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
   };
 
-  // Debounced search
+  // Debounced search - skip als we net een selectie hebben gemaakt
   useEffect(() => {
+    // Skip search als we net een selectie hebben gemaakt
+    if (isSelecting) {
+      setIsSelecting(false);
+      return;
+    }
+    
     if (query.length < 2) {
       setSuggestions([]);
       setShowDropdown(false);
@@ -94,7 +101,7 @@ const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, color
     }, 300);
     
     return () => clearTimeout(debounceRef.current);
-  }, [query]);
+  }, [query, isSelecting]);
 
   // Click outside handler
   useEffect(() => {
@@ -109,8 +116,10 @@ const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, color
 
   // Handle selection
   const handleSelect = async (suggestion) => {
+    setIsSelecting(true); // Voorkom dat useEffect opnieuw zoekt
     setLoading(true);
     setShowDropdown(false);
+    setSuggestions([]); // Clear suggestions om dropdown te voorkomen
     setQuery(suggestion.weergavenaam);
     
     try {
