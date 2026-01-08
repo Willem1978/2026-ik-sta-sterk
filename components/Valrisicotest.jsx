@@ -15,11 +15,18 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 // Dit voorkomt re-renders van de parent component bij elke keystroke
 // =============================================================================
 const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, colors, font }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(selectedLocation?.weergavenaam || '');
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  
+  // Update query wanneer selectedLocation verandert (bijv. na page refresh of externe wijziging)
+  useEffect(() => {
+    if (selectedLocation?.weergavenaam) {
+      setQuery(selectedLocation.weergavenaam);
+    }
+  }, [selectedLocation]);
   
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
