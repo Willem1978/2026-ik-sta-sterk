@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 // SUPABASE CONFIGURATIE
 // =============================================================================
 const SUPABASE_URL = 'https://rmtpaxywtygneartdjax.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_MORhVhUhH4hCQhHyGlNc1A_qaR03wvH';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtdHBheHl3dHlnbmVhcnRkamF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3OTA2MDMsImV4cCI6MjA4MzM2NjYwM30.Mk1AYplqY-svBRnZL1AcTjYSlJFRs18aYBaB2rvy3DM';
 
 // Alle data komt uit Supabase - geen dummy data meer
 
