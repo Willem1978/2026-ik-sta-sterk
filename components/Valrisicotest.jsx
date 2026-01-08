@@ -541,14 +541,14 @@ const IkStaSterkTest = () => {
     extrabold: 800,
   };
 
-  // Fysiotherapie praktijken met coÃ¶rdinaten
+  // Fysiotherapie praktijken met coördinaten
   const fysioPraktijken = [
     { id: 1, naam: 'FysioVitaal Ulft', adres: 'Industriestraat 12', plaats: 'Ulft', postcode: '7071XK', lat: 51.8956, lng: 6.3789, telefoon: '0315 - 123 456', omschrijving: 'FysioVitaal is gespecialiseerd in valpreventie en ouderenfysiotherapie. Bij ons krijg je een uitgebreide valrisicometing waarbij we je balans, spierkracht en looppatroon nauwkeurig in kaart brengen.', specialisaties: ['Valpreventie', 'Geriatrie', 'Balanstraining'], openingstijden: 'Ma-Vr 8:00-17:30', eersteAfspraak: 'Binnen 5 werkdagen' },
     { id: 2, naam: 'Fysiotherapie Terborg', adres: 'Hoofdstraat 45', plaats: 'Terborg', postcode: '7061CW', lat: 51.9203, lng: 6.3567, telefoon: '0315 - 234 567', omschrijving: 'Bij Fysiotherapie Terborg krijg je persoonlijke begeleiding bij het verbeteren van je balans en spierkracht. Onze therapeuten hebben ruime ervaring met ouderen.', specialisaties: ['Geriatrie', 'Spierkracht', 'Looptraining'], openingstijden: 'Ma-Vr 8:00-18:00', eersteAfspraak: 'Binnen 3 werkdagen' },
-    { id: 3, naam: 'Praktijk Bewegen & Balans', adres: 'Varsseveldseweg 78', plaats: 'Silvolde', postcode: '7064BZ', lat: 51.9134, lng: 6.3845, telefoon: '0315 - 345 678', omschrijving: 'Bewegen & Balans is dÃ© expert in het voorkomen van valincidenten. We werken nauw samen met huisartsen en specialisten in de regio.', specialisaties: ['Valpreventie', 'Oefentherapie', 'Groepslessen'], openingstijden: 'Ma-Vr 8:30-17:00', eersteAfspraak: 'Binnen 1 week' }
+    { id: 3, naam: 'Praktijk Bewegen & Balans', adres: 'Varsseveldseweg 78', plaats: 'Silvolde', postcode: '7064BZ', lat: 51.9134, lng: 6.3845, telefoon: '0315 - 345 678', omschrijving: 'Bewegen & Balans is dé expert in het voorkomen van valincidenten. We werken nauw samen met huisartsen en specialisten in de regio.', specialisaties: ['Valpreventie', 'Oefentherapie', 'Groepslessen'], openingstijden: 'Ma-Vr 8:30-17:00', eersteAfspraak: 'Binnen 1 week' }
   ];
 
-  // Uitgebreide postcode naar coÃ¶rdinaten lookup 
+  // Uitgebreide postcode naar coördinaten lookup 
   // Bron: Kadaster/PDOK data voor gemeente Oude IJsselstreek en omgeving
   const postcodeCoords = {
     // === GEMEENTE OUDE IJSSELSTREEK ===
@@ -639,7 +639,7 @@ const IkStaSterkTest = () => {
     '7103': { lat: 51.9722, lng: 6.7156, plaats: 'Winterswijk' },
   };
   
-  // Uitgebreide lijst van Nederlandse woonplaatsen met coÃ¶rdinaten
+  // Uitgebreide lijst van Nederlandse woonplaatsen met coördinaten
   // Dit zijn woonplaatsen (dorpen, gehuchten, steden), geen gemeenten
   const woonplaatsen = [
     // === GEMEENTE OUDE IJSSELSTREEK ===
@@ -735,7 +735,7 @@ const IkStaSterkTest = () => {
     { naam: 'Lichtenvoorde', lat: 51.9872, lng: 6.5639 },
     { naam: 'Zieuwent', lat: 52.0167, lng: 6.5167 },
     { naam: 'Harreveld', lat: 51.9833, lng: 6.5000 },
-    { naam: 'MariÃ«nvelde', lat: 52.0000, lng: 6.4667 },
+    { naam: 'Mariënvelde', lat: 52.0000, lng: 6.4667 },
     { naam: 'Vragender', lat: 52.0333, lng: 6.5833 },
     { naam: 'Lievelde', lat: 52.0167, lng: 6.6000 },
     
@@ -920,7 +920,7 @@ const IkStaSterkTest = () => {
     "Annen", "Apeldoorn", "Appelscha", "Appeltern", "Appingedam", "Arcen", "Arkel", "Arnemuiden",
     "Arnhem", "Asperen", "Assen", "Assendelft", "Asten", "Avenhorn", "Axel", "Azewijn",
     "Baak", "Baaium", "Baambrugge", "Baard", "Baarland", "Baarlo", "Baarle-Nassau", "Baarn",
-    "Baars", "Babberich", "BabyloniÃ«nbroek", "Badhoevedorp", "Baexem", "Bakel", "Bakhuizen",
+    "Baars", "Babberich", "Babyloniënbroek", "Badhoevedorp", "Baexem", "Bakel", "Bakhuizen",
     "Balgoij", "Balk", "Balloo", "Banholt", "Bant", "Barchem", "Barger-Compascuum", "Barneveld",
     "Barsingerhorn", "Batenburg", "Bathmen", "Bavel", "Bedum", "Beegden", "Beek", "Beekbergen",
     "Beemte Broekland", "Beers", "Beesd", "Beesel", "Beetgum", "Beetgumermolen", "Beetsterzwaag",
@@ -967,7 +967,7 @@ const IkStaSterkTest = () => {
     "Emmen", "Emmer-Compascuum", "Emst", "Engelen", "Engelum", "Enkhuizen", "Ens", "Enschede",
     "Enter", "Enumatil", "Epe", "Epen", "Epse", "Erica", "Erichem", "Erm", "Ermelo", "Erp",
     "Escharen", "Espel", "Est", "Etten", "Etten-Leur", "Exel", "Exloo", "Exmorra",
-    "Farmsum", "FeanwÃ¢lden", "Ferwert", "Fijnaart", "Finsterwolde", "Fleringen", "Fochteloo",
+    "Farmsum", "Feanwâlden", "Ferwert", "Fijnaart", "Finsterwolde", "Fleringen", "Fochteloo",
     "Follega", "Formerum", "Foxhol", "Franeker", "Frederiksoord", "Frieschepalen",
     "Gaanderen", "Gaast", "Gaastmeer", "Gapinge", "Garmerwolde", "Garrelsweer", "Garyp",
     "Gasselte", "Gasselternijveen", "Geervliet", "Gees", "Geesbrug", "Geesteren", "Geffen",
@@ -1026,7 +1026,7 @@ const IkStaSterkTest = () => {
     "Maarheeze", "Maarn", "Maarsbergen", "Maarssen", "Maartensdijk", "Maasbommel",
     "Maasbracht", "Maasbree", "Maasdam", "Maasdijk", "Maashees", "Maasland", "Maassluis",
     "Maastricht", "Macharen", "Made", "Makkinga", "Makkum", "Malden", "Mander", "Mantgum",
-    "Margraten", "Mariahout", "MariÃ«nberg", "MariÃ«nheem", "MariÃ«nvelde", "Marken", "Markelo",
+    "Margraten", "Mariahout", "Mariënberg", "Mariënheem", "Mariënvelde", "Marken", "Markelo",
     "Marknesse", "Marrum", "Marum", "Maurik", "Mechelen", "Meddo", "Medemblik", "Meeden",
     "Meerlo", "Meerssen", "Megchelen", "Meijel", "Melick", "Melissant", "Menaam", "Meppel",
     "Merselo", "Meteren", "Meterik", "Middelburg", "Middelharnis", "Middenbeemster",
@@ -1074,7 +1074,7 @@ const IkStaSterkTest = () => {
     "Schoonebeek", "Sellingen", "Sevenum", "Sibculo", "Siddeburen", "Silvolde", "Simpelveld",
     "Sinderen", "Sint Agatha", "Sint Annaland", "Sint Annaparochie", "Sint Anthonis",
     "Sint Jansklooster", "Sint Joost", "Sint Laurens", "Sint Maarten", "Sint Maartensdijk",
-    "Sint Michielsgestel", "Sint Nicolaasga", "Sint OdiliÃ«nberg", "Sint Oedenrode",
+    "Sint Michielsgestel", "Sint Nicolaasga", "Sint Odiliënberg", "Sint Oedenrode",
     "Sint Pancras", "Sint Philipsland", "Sint Willibrord", "Sittard", "Slagharen", "Sleen",
     "Sleeuwijk", "Sliedrecht", "Slochteren", "Slootdorp", "Sloten", "Sluis", "Sluiskil",
     "Smilde", "Sneek", "Soest", "Soesterberg", "Someren", "Sommelsdijk", "Son en Breugel",
@@ -1122,7 +1122,7 @@ const IkStaSterkTest = () => {
     "Zwaanshoek", "Zwammerdam", "Zwanenburg", "Zwartsluis", "Zwijndrecht", "Zwolle"
   ];
 
-  // CoÃ¶rdinaten per gemeente (voor fallback als exacte woonplaats niet bekend is)
+  // Coördinaten per gemeente (voor fallback als exacte woonplaats niet bekend is)
   const gemeenteCoords = {
     // Achterhoek
     'Oude IJsselstreek': { lat: 51.8958, lng: 6.3789 },
@@ -1183,7 +1183,7 @@ const IkStaSterkTest = () => {
     'Delft': { lat: 52.0116, lng: 4.3571 },
   };
 
-  // Woonplaats naar gemeente mapping (voor fallback coÃ¶rdinaten)
+  // Woonplaats naar gemeente mapping (voor fallback coördinaten)
   const woonplaatsGemeente = {
     // Oude IJsselstreek
     'Ulft': 'Oude IJsselstreek', 'Silvolde': 'Oude IJsselstreek', 'Terborg': 'Oude IJsselstreek',
@@ -1210,7 +1210,7 @@ const IkStaSterkTest = () => {
     'Azewijn': 'Montferland', 'Nieuw-Dijk': 'Montferland', 'Loil': 'Montferland',
     // Oost Gelre
     'Groenlo': 'Oost Gelre', 'Lichtenvoorde': 'Oost Gelre', 'Zieuwent': 'Oost Gelre',
-    'Harreveld': 'Oost Gelre', 'MariÃ«nvelde': 'Oost Gelre', 'Vragender': 'Oost Gelre', 'Lievelde': 'Oost Gelre',
+    'Harreveld': 'Oost Gelre', 'Mariënvelde': 'Oost Gelre', 'Vragender': 'Oost Gelre', 'Lievelde': 'Oost Gelre',
     // Winterswijk
     'Winterswijk': 'Winterswijk', 'Woold': 'Winterswijk', 'Kotten': 'Winterswijk',
     'Miste': 'Winterswijk', 'Corle': 'Winterswijk', 'Henxel': 'Winterswijk', 'Meddo': 'Winterswijk',
@@ -1254,13 +1254,13 @@ const IkStaSterkTest = () => {
     'Dordrecht': 'Dordrecht', 'Zoetermeer': 'Zoetermeer', 'Delft': 'Delft',
   };
 
-  // Functie om coÃ¶rdinaten te krijgen voor een woonplaats
+  // Functie om coördinaten te krijgen voor een woonplaats
   const getWoonplaatsCoords = (plaats) => {
     if (!plaats) return null;
     
     const plaatsLower = plaats.toLowerCase();
     
-    // 1. Zoek eerst exacte match in woonplaatsen array (met exacte coÃ¶rdinaten)
+    // 1. Zoek eerst exacte match in woonplaatsen array (met exacte coördinaten)
     const found = woonplaatsen.find(w => w.naam.toLowerCase() === plaatsLower);
     if (found) {
       return { lat: found.lat, lng: found.lng };
@@ -1281,11 +1281,11 @@ const IkStaSterkTest = () => {
       return gemeenteCoords[gemeenteDirectKey];
     }
     
-    // 4. Geen coÃ¶rdinaten gevonden - return null (afstand kan niet berekend worden)
+    // 4. Geen coördinaten gevonden - return null (afstand kan niet berekend worden)
     return null;
   };
   
-  // Functie om coÃ¶rdinaten te krijgen voor een postcode (behouden voor backwards compatibility)
+  // Functie om coördinaten te krijgen voor een postcode (behouden voor backwards compatibility)
   const getPostcodeCoords = (pc) => {
     if (!pc) return null;
     const pc4 = pc.toString().substring(0, 4);
@@ -1321,10 +1321,10 @@ const IkStaSterkTest = () => {
     { id: 'v2', question: 'Ben je bang om te vallen?', explanation: 'Angst voor een val kan ervoor zorgen dat je activiteiten vermijdt (zelf een rondje lopen, boodschappen doen, fietsen).', nextIfYes: 'v8', nextIfNo: 'v3' },
     { id: 'v3', question: 'Heb je moeite met bewegen, lopen of evenwicht houden?', explanation: 'Vul ook "ja" in als je een wandelstok, rollator of looprek gebruikt bij het lopen.', nextIfYes: 'v8', nextIfNo: 'end_low' },
     { id: 'v4', question: 'Had je verwondingen na je val en ben je hiervoor bij de dokter of in het ziekenhuis geweest?', explanation: 'Voorbeelden van verwondingen: bloedingen, kneuzingen, botbreuken. Had je verwondingen maar ben je niet bij de dokter of het ziekenhuis geweest, vul dan "nee" in.', nextIfYes: 'v5', nextIfNo: 'v5' },
-    { id: 'v5', question: 'Ben je vaker dan Ã©Ã©n keer gevallen in het afgelopen jaar?', explanation: 'Elke val in het afgelopen jaar telt mee, ongeacht de oorzaak.', nextIfYes: 'v6', nextIfNo: 'v6' },
+    { id: 'v5', question: 'Ben je vaker dan één keer gevallen in het afgelopen jaar?', explanation: 'Elke val in het afgelopen jaar telt mee, ongeacht de oorzaak.', nextIfYes: 'v6', nextIfNo: 'v6' },
     { id: 'v6', question: 'Ben je gevallen doordat je flauwviel?', explanation: 'Flauwvallen betekent dat je even bewusteloos was en niet reageerde op geluid of aanraking.', nextIfYes: 'v7', nextIfNo: 'v7' },
     { id: 'v7', question: 'Kon je zelf opstaan na de val?', explanation: 'Je kon zelf opstaan als je geen hulp nodig had van iemand anders.', nextIfYes: 'v8', nextIfNo: 'v8' },
-    { id: 'v8', question: 'Kan je een of meer van de volgende taken zelf doen? (koken, tuinieren, stofzuigen of dweilen, boodschappen doen)', explanation: 'Vul "ja" in als je Ã©Ã©n of meer van deze taken zelf kunt uitvoeren.', nextIfYes: 'end', nextIfNo: 'end' }
+    { id: 'v8', question: 'Kan je een of meer van de volgende taken zelf doen? (koken, tuinieren, stofzuigen of dweilen, boodschappen doen)', explanation: 'Vul "ja" in als je één of meer van deze taken zelf kunt uitvoeren.', nextIfYes: 'end', nextIfNo: 'end' }
   ];
 
   const preventionQuestions = [
@@ -1623,7 +1623,7 @@ const IkStaSterkTest = () => {
   );
 
   // Antwoordknoppen in Zlimthuis stijl - touch-friendly (geen hover op mobiel)
-  // AANGEPAST: Kleinere tekst zodat alles op Ã©Ã©n regel past
+  // AANGEPAST: Kleinere tekst zodat alles op één regel past
   const AnswerButton = ({ children, onClick, type = 'yes', disabled = false }) => {
     const [isPressed, setIsPressed] = useState(false);
     const [isSelected, setIsSelected] = useState(false);
