@@ -110,17 +110,43 @@ const PDOKLocationSearch = ({ onLocationSelect, onClear, selectedLocation, color
       const details = await pdokLookup(suggestion.id);
       if (details) {
         const coords = parseCoordinates(details.centroide_ll);
+        let postcode = details.postcode || null;
+        let wijkcode = details.wijkcode || null;
+        let buurtcode = details.buurtcode || null;
+        
+        // Als geen postcode (bijv. bij straat/weg selectie), zoek eerste adres van die straat
+        if (!postcode && details.straatnaam && details.woonplaatsnaam) {
+          try {
+            const adresQuery = `${details.straatnaam} 1 ${details.woonplaatsnaam}`;
+            const adresUrl = `${PDOK_BASE_URL}/suggest?q=${encodeURIComponent(adresQuery)}&fq=${encodeURIComponent('type:adres')}&rows=1&fl=id,weergavenaam,type`;
+            const adresResponse = await fetch(adresUrl);
+            if (adresResponse.ok) {
+              const adresData = await adresResponse.json();
+              if (adresData.response?.docs?.[0]) {
+                const adresDetails = await pdokLookup(adresData.response.docs[0].id);
+                if (adresDetails) {
+                  postcode = adresDetails.postcode || postcode;
+                  wijkcode = adresDetails.wijkcode || wijkcode;
+                  buurtcode = adresDetails.buurtcode || buurtcode;
+                }
+              }
+            }
+          } catch (err) {
+            console.log('Kon geen postcode ophalen voor straat:', err);
+          }
+        }
+        
         const locData = {
           pdok_id: details.id,
           weergavenaam: suggestion.weergavenaam,
           woonplaats: details.woonplaatsnaam || null,
           gemeentenaam: details.gemeentenaam || null,
           gemeentecode: details.gemeentecode || null,
-          postcode: details.postcode || null,
+          postcode: postcode,
           straatnaam: details.straatnaam || null,
           huisnummer: details.huisnummer ? String(details.huisnummer) : null,
-          wijkcode: details.wijkcode || null,
-          buurtcode: details.buurtcode || null,
+          wijkcode: wijkcode,
+          buurtcode: buurtcode,
           latitude: coords.lat,
           longitude: coords.lng
         };
