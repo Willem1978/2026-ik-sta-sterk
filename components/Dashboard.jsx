@@ -85,7 +85,7 @@ const MAANDEN = [
   { id: 12, kort: 'Dec', naam: 'December' },
 ];
 
-const JAREN = [2023, 2024, 2025];
+const JAREN = [2023, 2024, 2025, 2026];
 
 // Minimum aantal tests voor data weergave (privacy/betrouwbaarheid)
 const MIN_TESTS_VOOR_WEERGAVE = 10;
