@@ -1423,10 +1423,22 @@ const IkStaSterkTest = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Data opgeslagen:', result);
+        console.log('Data opgeslagen - volledige response:', result);
         setDataSaved(true);
-        if (result && result[0] && result[0].id) {
-          setSavedRecordId(result[0].id);
+        
+        // Supabase kan array of object teruggeven
+        let recordId = null;
+        if (Array.isArray(result) && result[0]?.id) {
+          recordId = result[0].id;
+        } else if (result?.id) {
+          recordId = result.id;
+        }
+        
+        if (recordId) {
+          console.log('SavedRecordId ingesteld op:', recordId);
+          setSavedRecordId(recordId);
+        } else {
+          console.error('Kon geen record ID vinden in response:', result);
         }
         return result;
       } else {
@@ -1445,36 +1457,48 @@ const IkStaSterkTest = () => {
     
     if (!savedRecordId) {
       console.error('Geen savedRecordId beschikbaar - fysio contact kan niet worden opgeslagen');
-      alert('Er ging iets mis. Probeer het opnieuw of neem contact op.');
-      return;
+      console.log('Huidige state - dataSaved:', dataSaved);
+      alert('Er ging iets mis bij het opslaan. De test is mogelijk niet correct opgeslagen. Probeer de test opnieuw.');
+      return false;
     }
     
     try {
+      const updateData = {
+        fysio_contact_aangevraagd: true,
+        fysio_praktijk: fysioNaam,
+        fysio_naam: contactNaam,
+        fysio_telefoon: contactTelefoon,
+        fysio_contact_datum: new Date().toISOString()
+      };
+      
+      console.log('Verstuur PATCH naar:', `${SUPABASE_URL}/rest/v1/testresultaten?id=eq.${savedRecordId}`);
+      console.log('Update data:', updateData);
+      
       const response = await fetch(`${SUPABASE_URL}/rest/v1/testresultaten?id=eq.${savedRecordId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=representation'
         },
-        body: JSON.stringify({
-          fysio_contact_aangevraagd: true,
-          fysio_praktijk: fysioNaam,
-          fysio_naam: contactNaam,
-          fysio_telefoon: contactTelefoon
-        })
+        body: JSON.stringify(updateData)
       });
 
       if (response.ok) {
-        console.log('Fysio contact succesvol opgeslagen voor record:', savedRecordId);
+        const result = await response.json();
+        console.log('Fysio contact succesvol opgeslagen:', result);
+        return true;
       } else {
         const errorText = await response.text();
         console.error('Fout bij updaten fysio contact:', response.status, errorText);
-        alert('Er ging iets mis bij het opslaan. Probeer het opnieuw.');
+        alert('Er ging iets mis bij het opslaan van je aanvraag. Neem contact op met de praktijk.');
+        return false;
       }
     } catch (error) {
       console.error('Fout bij updaten fysio contact:', error);
-      alert('Er ging iets mis. Controleer je internetverbinding.');
+      alert('Er ging iets mis. Controleer je internetverbinding en probeer opnieuw.');
+      return false;
     }
   };
 
